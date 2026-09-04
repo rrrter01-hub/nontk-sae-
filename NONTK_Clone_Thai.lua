@@ -252,31 +252,49 @@ task.spawn(function()
   end)
 end)
 
-  -- ถ้าหน้าต่างย่อโดนเปิดใช้ (พับจอ) ย้อมส้มทันที
-  task.spawn(function()
-    local t0 = os.clock()
-    while os.clock() - t0 < 60 do
-      task.wait(1)
-      pcall(function()
-        local mini = m._minGui
-        if mini and mini.Enabled then
-          local mf = mini:FindFirstChild('MinIcon')
-          local icon = mf and mf:FindFirstChild('Icon')
-          if icon and icon:IsA('ImageLabel') and icon.Image ~= '' then
-            icon.Image = '' icon.ImageColor3 = ORANGE
-          end
-          local mark = icon and icon:FindFirstChild('nontkMark')
-          if not mark and icon then
-            mark = Instance.new('TextLabel')
-            mark.Name = 'nontkMark'
-            mark.Size = UDim2.new(1, 0, 1, 0)
-            mark.BackgroundTransparency = 1
-            mark.Font = Enum.Font.GothamBlack
-            mark.Text = 'N' mark.TextColor3 = ORANGE mark.TextScaled = true
-            mark.Rotation = -14
-            mark.Parent = icon
-          end
-        end
-      end)
+-- ============ nontk: ลูปคุมโลโก้ถาวร (self-contained) ============
+task.spawn(function()
+  local ORANGE = Color3.fromRGB(255, 140, 0)
+  local g = (getgenv and getgenv()) or _G
+  local function makeMark(icon)
+    if icon and not icon:FindFirstChild('nontkMark') then
+      local t = Instance.new('TextLabel')
+      t.Name = 'nontkMark'
+      t.Size = UDim2.new(1, 0, 1, 0)
+      t.BackgroundTransparency = 1
+      t.Font = Enum.Font.GothamBlack
+      t.Text = 'N'
+      t.TextColor3 = ORANGE
+      t.TextScaled = true
+      t.Rotation = -14
+      t.Parent = icon
     end
-  end)
+  end
+  while true do
+    task.wait(1)
+    pcall(function()
+      local hs = g.__FyyCommunityStealAnEgg
+      local m = hs and hs.menu
+      if not m then return end
+      -- หน้าย่อ
+      if m._minGui then
+        local mf = m._minGui:FindFirstChild('MinIcon')
+        local icon = mf and mf:FindFirstChild('Icon')
+        if icon and icon:IsA('ImageLabel') then
+          if icon.Image ~= '' then icon.Image = '' icon.ImageColor3 = ORANGE end
+          makeMark(icon)
+        end
+      end
+      -- หน้าหลัก
+      if m.Gui then
+        local main = m.Gui:FindFirstChild('Main')
+        local tb = main and main:FindFirstChild('Topbar')
+        local logo = tb and tb:FindFirstChild('TitleLogo')
+        if logo and logo:IsA('ImageLabel') then
+          if logo.Image ~= '' then logo.Image = '' logo.ImageColor3 = ORANGE end
+          makeMark(logo)
+        end
+      end
+    end)
+  end
+end)
