@@ -189,13 +189,48 @@ task.spawn(function()
     end
   end)
 
-  -- GUI แถม (notification) ติดแบรนด์เดิม
+  -- หน้าต่างย่อ (พับจอ) + GUI แถม (notification) — โลโก้/สี/แบรนด์ทั้งชุด
   pcall(function()
+    if m._minGui then
+      local mini = m._minGui
+      mini.Name = 'nontkUI_Min'
+      local mframe = mini:FindFirstChild('MinIcon')
+      if mframe then
+        -- แทนรูป Icon เดิมด้วย N เอน
+        local icon = mframe:FindFirstChild('Icon')
+        if icon and icon:IsA('ImageLabel') then
+          icon.Image = ''
+          icon.ImageColor3 = ORANGE
+          local t = icon:FindFirstChild('nontkMark')
+          if not t then
+            t = Instance.new('TextLabel')
+            t.Name = 'nontkMark'
+            t.Size = UDim2.new(1, 0, 1, 0)
+            t.BackgroundTransparency = 1
+            t.Font = Enum.Font.GothamBlack
+            t.Text = 'N'
+            t.TextColor3 = ORANGE
+            t.TextScaled = true
+            t.Rotation = -14
+            t.Parent = icon
+          end
+        end
+        if mframe:IsA('ImageButton') or mframe:IsA('Frame') then
+          if isAccent(mframe.BackgroundColor3) then mframe.BackgroundColor3 = ORANGE end
+        end
+        local stroke = mframe:FindFirstChild('UIStroke')
+        if stroke and isAccent(stroke.Color) then stroke.Color = ORANGE end
+      end
+      mini.Enabled = false -- ซ่อนไว้ตามพฤติกรรมเดิม (โชว์เมื่อพับหน้าต่าง)
+    end
+    -- sync: ตอนพับจอ ให้ min โชว์ โลโก้ N ส้ม (ตามที่ทำไปแล้วข้างบน)
     local parent = (gethui and gethui()) or game:GetService('CoreGui')
     for _, d in ipairs(parent:GetChildren()) do
-      if d:IsA('ScreenGui') and d ~= m.Gui and d.Name:find('Fyy') then
-        nTotal = nTotal + retheme(d)
-        d.Name = d.Name:gsub('Fyy', 'nontk')
+      if d:IsA('ScreenGui') and d ~= m.Gui and (d.Name:find('Fyy') or (mini and d.Name == mini.Name)) then
+        if d.Name:find('Fyy') then
+          nTotal = nTotal + retheme(d)
+          d.Name = d.Name:gsub('Fyy', 'nontk')
+        end
       end
     end
   end)
@@ -216,3 +251,32 @@ task.spawn(function()
     end
   end)
 end)
+
+  -- ถ้าหน้าต่างย่อโดนเปิดใช้ (พับจอ) ย้อมส้มทันที
+  task.spawn(function()
+    local t0 = os.clock()
+    while os.clock() - t0 < 60 do
+      task.wait(1)
+      pcall(function()
+        local mini = m._minGui
+        if mini and mini.Enabled then
+          local mf = mini:FindFirstChild('MinIcon')
+          local icon = mf and mf:FindFirstChild('Icon')
+          if icon and icon:IsA('ImageLabel') and icon.Image ~= '' then
+            icon.Image = '' icon.ImageColor3 = ORANGE
+          end
+          local mark = icon and icon:FindFirstChild('nontkMark')
+          if not mark and icon then
+            mark = Instance.new('TextLabel')
+            mark.Name = 'nontkMark'
+            mark.Size = UDim2.new(1, 0, 1, 0)
+            mark.BackgroundTransparency = 1
+            mark.Font = Enum.Font.GothamBlack
+            mark.Text = 'N' mark.TextColor3 = ORANGE mark.TextScaled = true
+            mark.Rotation = -14
+            mark.Parent = icon
+          end
+        end
+      end)
+    end
+  end)
