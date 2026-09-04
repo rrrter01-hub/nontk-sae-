@@ -102,16 +102,21 @@ end
 task.spawn(function()
   local ORANGE = Color3.fromRGB(255, 140, 0)
   local g = (getgenv and getgenv()) or _G
+
+  -- รอ hub
   local hs = g.__FyyCommunityStealAnEgg
   local deadline = os.clock() + 25
   while not hs and os.clock() < deadline do task.wait(0.25) hs = g.__FyyCommunityStealAnEgg end
   if not hs then warn("[nontk] hub ไม่ถูกสร้าง — executor นี้อาจไม่รองรับ ลอง Delta/Hydrogen ล่าสุด") return end
+
+  -- รอเมนู
   deadline = os.clock() + 25
   local m = hs.menu
   while not (m and m.Gui) and os.clock() < deadline do task.wait(0.25) m = hs.menu end
   if not (m and m.Gui) then warn("[nontk] UI ไม่ถูกสร้าง — อาจโหลด FyyUI ไม่ได้ (เน็ต/executor)") return end
   task.wait(0.5)
 
+  -- เปิดหน้าต่าง
   pcall(function()
     m.Gui.Enabled = true
     if m.Frame then
@@ -122,11 +127,13 @@ task.spawn(function()
     if m._minGui then pcall(function() m._minGui.Enabled = false end) end
   end)
 
-  -- ===== โลโก้ N เอน + ธีมส้ม =====
+  -- ตัวช่วยตรวจสีม่วง/น้ำเงินเดิม
   local function isAccent(c)
     return c and ((c.B > 0.75 and c.R > 0.3 and c.R < 0.75 and c.G < 0.5)
                or (c.B > 0.75 and c.R < 0.4 and c.G > 0.3))
   end
+
+  -- โลโก้ N เอน
   local function makeNMark(logo)
     pcall(function()
       logo.Image = ''
@@ -146,10 +153,12 @@ task.spawn(function()
       end
     end)
   end
+
+  -- ย้อมส้มทั้งต้นไม้ (node ใช้ตัวเดียวตลอด — ไม่มีตัวแปรค้าง)
   local function retheme(root)
     local n = 0
     local function walk(node)
-      for _, c in ipairs(o:GetChildren()) do
+      for _, c in ipairs(node:GetChildren()) do
         if c:IsA('UIStroke') then
           if isAccent(c.Color) then c.Color = ORANGE n = n + 1 end
         elseif c:IsA('TextLabel') or c:IsA('TextButton') then
@@ -165,7 +174,8 @@ task.spawn(function()
     walk(root)
     return n
   end
-  -- แต่งหลัก
+
+  -- แต่งเมนูหลัก
   local nTotal = 0
   pcall(function()
     nTotal = nTotal + retheme(m.Gui)
@@ -174,21 +184,23 @@ task.spawn(function()
     if m._titleText then m._titleText = 'nontk' end
     if m.Options and m.Options.Title then m.Options.Title = 'nontk' end
     if m.Theme then
-      m.Theme.AccentLine = Color3.fromRGB(255, 140, 0)
-      m.Theme.ToggleOn = Color3.fromRGB(255, 140, 0)
+      m.Theme.AccentLine = ORANGE
+      m.Theme.ToggleOn = ORANGE
     end
   end)
-  -- GUI อื่นๆ ที่ติดแบรนด์เดิม (notification ฯลฯ)
+
+  -- GUI แถม (notification) ติดแบรนด์เดิม
   pcall(function()
     local parent = (gethui and gethui()) or game:GetService('CoreGui')
     for _, d in ipairs(parent:GetChildren()) do
       if d:IsA('ScreenGui') and d ~= m.Gui and d.Name:find('Fyy') then
-        retheme(d)
+        nTotal = nTotal + retheme(d)
         d.Name = d.Name:gsub('Fyy', 'nontk')
       end
     end
   end)
-  -- เก็บกวาดสีค้างที่โผล่ทีหลัง (สลับแท็บ/เปิด dropdown) 30 วินาทีแรก
+
+  -- เก็บกวาดสีที่โผล่ทีหลัง 30 วิแรก
   task.spawn(function()
     local t0 = os.clock()
     while os.clock() - t0 < 30 do
@@ -196,10 +208,11 @@ task.spawn(function()
       pcall(function() retheme(m.Gui) end)
     end
   end)
+
   print('[nontk] ธีมส้ม + โลโก้ N เอน พร้อมใช้ (แก้ ' .. nTotal .. ' จุด)')
   pcall(function()
     if type(m.Notify) == 'function' then
-      m.Notify({ Title = 'โหลดสำเร็จ', Content = 'nontk พร้อมใช้งาน — ธีมส้ม โลโก้ N', Type = 'Success', Duration = 5 })
+      m.Notify({ Title = 'โหลดสำเร็จ', Content = 'nontk ธีมส้ม โลโก้ N พร้อมใช้', Type = 'Success', Duration = 5 })
     end
   end)
 end)
